@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>North Oil Technology Radar</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with Logo -->
+        <header class="header">
+            <div class="logo-container">
+                <img src="assets/north-oil-logo.png" alt="North Oil Company" class="logo">
+                <div class="header-text">
+                    <h1>North Oil Technology Radar</h1>
+                    <p>Innovation & Technology Landscape</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filters Section -->
+        <aside class="filters-panel">
+            <h2>Filters</h2>
+            
+            <div class="filter-group">
+                <h3>Focus Areas</h3>
+                <div id="focusAreaFilters" class="filter-options">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Reservoir Potential" checked> Reservoir Potential
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="HSSE" checked> HSSE (Health, Safety, Security, Environment)
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Operations" checked> Operations
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="AI" checked> AI & Automation
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>Tech Clusters</h3>
+                <div id="techClusterFilters" class="filter-options">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Adopt" checked> Adopt
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Trial" checked> Trial
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Assess" checked> Assess
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Hold" checked> Hold
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <button id="resetFilters" class="reset-button">Reset Filters</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-ring" style="width: 20px; height: 20px; border: 2px solid #ff6b35; border-radius: 50%;"></div>
+                    <span>Adopt</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-ring" style="width: 20px; height: 20px; border: 2px solid #f7931e; border-radius: 50%;"></div>
+                    <span>Trial</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-ring" style="width: 20px; height: 20px; border: 2px solid #fdb913; border-radius: 50%;"></div>
+                    <span>Assess</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-ring" style="width: 20px; height: 20px; border: 2px solid #c0c0c0; border-radius: 50%;"></div>
+                    <span>Hold</span>
+                </div>
+            </div>
+
+            <!-- Radar SVG Container -->
+            <div id="radarContainer" class="radar-container">
+                <svg id="radarSvg" width="1000" height="1000"></svg>
+            </div>
+        </main>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip">
+        <div class="tooltip-content">
+            <h4 id="tooltipTitle"></h4>
+            <p id="tooltipDescription"></p>
+            <div id="tooltipDetails"></div>
+        </div>
+        <div class="tooltip-arrow"></div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="radar.js"></script>
+</body>
+</html>
