@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>North Oil Technology Radar</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+    color: #e0e0e0;
+    overflow-x: hidden;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Header Styles */
+.header {
+    grid-column: 1 / -1;
+    background: linear-gradient(90deg, #1a1f2e 0%, #2a2f3e 100%);
+    padding: 20px 40px;
+    border-bottom: 2px solid #ff6b35;
+    display: flex;
+    align-items: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo {
+    height: 60px;
+    width: 60px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+}
+
+.header-text h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.header-text p {
+    font-size: 14px;
+    color: #ff6b35;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Filters Panel */
+.filters-panel {
+    grid-column: 1;
+    grid-row: 2;
+    background: #1a1f2e;
+    padding: 20px;
+    border-right: 1px solid #2a2f3e;
+    overflow-y: auto;
+    max-height: calc(100vh - 120px);
+}
+
+.filters-panel h2 {
+    font-size: 18px;
+    color: #fff;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.filter-group {
+    margin-bottom: 25px;
+}
+
+.filter-group h3 {
+    font-size: 12px;
+    color: #ff6b35;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 13px;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.filter-checkbox:hover {
+    color: #ff6b35;
+}
+
+.filter-checkbox input[type="checkbox"] {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #ff6b35;
+}
+
+.reset-button {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.reset-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+/* Main Content */
+.main-content {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    padding: 30px;
+    position: relative;
+}
+
+/* Legend */
+.legend {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.legend-ring {
+    flex-shrink: 0;
+}
+
+/* Radar Container */
+.radar-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle, rgba(255, 107, 53, 0.05) 0%, transparent 70%);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 107, 53, 0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+#radarSvg {
+    filter: drop-shadow(0 0 20px rgba(255, 107, 53, 0.1));
+}
+
+/* Bubble Styles */
+.bubble {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.bubble:hover {
+    filter: drop-shadow(0 4px 12px rgba(255, 107, 53, 0.6)) brightness(1.1);
+    transform-origin: center;
+}
+
+.bubble circle {
+    transition: all 0.3s ease;
+}
+
+.bubble text {
+    pointer-events: none;
+    font-size: 12px;
+    font-weight: 600;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+/* Radar Rings */
+.radar-ring {
+    fill: none;
+    stroke: rgba(255, 107, 53, 0.1);
+    stroke-width: 1;
+}
+
+.radar-label {
+    font-size: 12px;
+    fill: rgba(255, 255, 255, 0.5);
+    text-anchor: middle;
+}
+
+/* Tooltip */
+.tooltip {
+    position: fixed;
+    background: rgba(26, 31, 46, 0.98);
+    color: #e0e0e0;
+    border: 1px solid #ff6b35;
+    border-radius: 8px;
+    padding: 16px;
+    pointer-events: none;
+    display: none;
+    z-index: 1000;
+    max-width: 300px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+}
+
+.tooltip.visible {
+    display: block;
+    animation: tooltipFadeIn 0.2s ease;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tooltip-content h4 {
+    color: #ff6b35;
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.tooltip-content p {
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 10px;
+    color: #b0b0b0;
+}
+
+#tooltipDetails {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.6;
+}
+
+.tooltip-arrow {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(26, 31, 46, 0.98);
+    border-right: 1px solid #ff6b35;
+    border-bottom: 1px solid #ff6b35;
+    transform: rotate(-45deg);
+    pointer-events: none;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 107, 53, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ff6b35;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #f7931e;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .container {
+        grid-template-columns: 200px 1fr;
+    }
+    
+    .header-text h1 {
+        font-size: 24px;
+    }
+    
+    #radarSvg {
+        width: 90% !important;
+        height: auto !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+    }
+    
+    .filters-panel {
+        grid-column: 1;
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+        padding: 15px;
+        border-right: none;
+        border-bottom: 1px solid #2a2f3e;
+        max-height: none;
+    }
+    
+    .filter-group {
+        margin-bottom: 0;
+    }
+    
+    .main-content {
+        grid-column: 1;
+        grid-row: 3;
+        padding: 15px;
+    }
+    
+    .logo {
+        height: 40px;
+    }
+    
+    .header {
+        padding: 15px 20px;
+    }
+    
+    .header-text h1 {
+        font-size: 20px;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header with Logo -->
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo">NOC</div>
+                <div class="header-text">
+                    <h1>North Oil Technology Radar</h1>
+                    <p>Innovation & Technology Landscape</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filters Section -->
+        <aside class="filters-panel">
+            <h2>Filters</h2>
+            
+            <div class="filter-group">
+                <h3>Focus Areas</h3>
+                <div id="focusAreaFilters" class="filter-options">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Reservoir Potential" checked> Reservoir Potential
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="HSSE" checked> HSSE (Health, Safety, Security, Environment)
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Operations" checked> Operations
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="AI" checked> AI & Automation
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h3>Tech Clusters</h3>
+                <div id="techClusterFilters" class="filter-options">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Adopt" checked> Adopt
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Trial" checked> Trial
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Assess" checked> Assess
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" value="Hold" checked> Hold
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <button id="resetFilters" class="reset-button">Reset Filters</button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-ring" style="width: 20px; height: 20px; border: 2px solid #ff6b35; border-radius: 50%;"></div>
+                    <span>Adopt</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-ring" style="width: 20px; height: 20px; border: 2px solid #f7931e; border-radius: 50%;"></div>
+                    <span>Trial</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-ring" style="width: 20px; height: 20px; border: 2px solid #fdb913; border-radius: 50%;"></div>
+                    <span>Assess</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-ring" style="width: 20px; height: 20px; border: 2px solid #c0c0c0; border-radius: 50%;"></div>
+                    <span>Hold</span>
+                </div>
+            </div>
+
+            <!-- Radar SVG Container -->
+            <div id="radarContainer" class="radar-container">
+                <svg id="radarSvg" width="1000" height="1000"></svg>
+            </div>
+        </main>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip">
+        <div class="tooltip-content">
+            <h4 id="tooltipTitle"></h4>
+            <p id="tooltipDescription"></p>
+            <div id="tooltipDetails"></div>
+        </div>
+        <div class="tooltip-arrow"></div>
+    </div>
+
+    <script>
+// Technology Radar Data
+const radarData = [
+    // Reservoir Potential - Adopt Ring
+    {
+        id: 1,
+        name: "Advanced Seismic Imaging",
+        focusArea: "Reservoir Potential",
+        ring: "Adopt",
+        value: 5,
+        description: "3D/4D seismic imaging for enhanced reservoir characterization",
+        details: "ML-powered interpretation, real-time updates, cost reduction: 30%"
+    },
+    {
+        id: 2,
+        name: "Pressure Management Systems",
+        focusArea: "Reservoir Potential",
+        ring: "Adopt",
+        value: 4,
+        description: "Real-time pressure monitoring and optimization",
+        details: "Prevents overburden damage, extends well life by 25%"
+    },
+    {
+        id: 3,
+        name: "Horizontal Well Technology",
+        focusArea: "Reservoir Potential",
+        ring: "Adopt",
+        value: 5,
+        description: "Extended reach drilling for improved recovery rates",
+        details: "20-40% production increase, reduces environmental footprint"
+    },
+    // Reservoir Potential - Trial Ring
+    {
+        id: 4,
+        name: "AI-Driven Resource Estimation",
+        focusArea: "Reservoir Potential",
+        ring: "Trial",
+        value: 4,
+        description: "Machine learning for reserve calculation accuracy",
+        details: "Reduces estimation error to <5%, enables faster decision-making"
+    },
+    {
+        id: 5,
+        name: "Microseismic Monitoring",
+        focusArea: "Reservoir Potential",
+        ring: "Trial",
+        value: 3,
+        description: "Real-time fracture propagation tracking",
+        details: "Optimizes stimulation design, currently in pilot phase"
+    },
+    // Reservoir Potential - Assess Ring
+    {
+        id: 6,
+        name: "Quantum Reservoir Simulation",
+        focusArea: "Reservoir Potential",
+        ring: "Assess",
+        value: 2,
+        description: "Quantum computing for complex reservoir modeling",
+        details: "Early research phase, potential 1000x speedup"
+    },
+    // HSSE - Adopt Ring
+    {
+        id: 7,
+        name: "Wearable Safety Sensors",
+        focusArea: "HSSE",
+        ring: "Adopt",
+        value: 5,
+        description: "IoT wearables for real-time worker safety monitoring",
+        details: "Detects hazards, prevents accidents, 40% incident reduction"
+    },
+    {
+        id: 8,
+        name: "Drone Inspection Systems",
+        focusArea: "HSSE",
+        ring: "Adopt",
+        value: 4,
+        description: "Autonomous drones for facility and pipeline inspection",
+        details: "Reduces manual inspection time by 70%, improves coverage"
+    },
+    {
+        id: 9,
+        name: "Environmental Monitoring Network",
+        focusArea: "HSSE",
+        ring: "Adopt",
+        value: 4,
+        description: "Continuous air and water quality monitoring",
+        details: "Regulatory compliance, real-time alerts, predictive analysis"
+    },
+    // HSSE - Trial Ring
+    {
+        id: 10,
+        name: "AR Safety Training",
+        focusArea: "HSSE",
+        ring: "Trial",
+        value: 3,
+        description: "Augmented reality for immersive safety training",
+        details: "75% faster learning, better retention than traditional methods"
+    },
+    {
+        id: 11,
+        name: "Predictive Health Analytics",
+        focusArea: "HSSE",
+        ring: "Trial",
+        value: 3,
+        description: "AI-powered occupational health risk prediction",
+        details: "Identifies health risks before issues arise"
+    },
+    // HSSE - Assess Ring
+    {
+        id: 12,
+        name: "Neural Implants for Hazard Detection",
+        focusArea: "HSSE",
+        ring: "Assess",
+        value: 1,
+        description: "Emerging biotech for autonomous hazard sensing",
+        details: "Highly speculative, regulatory challenges ahead"
+    },
+    // Operations - Adopt Ring
+    {
+        id: 13,
+        name: "SCADA Systems Optimization",
+        focusArea: "Operations",
+        ring: "Adopt",
+        value: 5,
+        description: "Supervisory control and data acquisition optimization",
+        details: "Real-time operational control, 15% efficiency gain"
+    },
+    {
+        id: 14,
+        name: "Predictive Maintenance",
+        focusArea: "Operations",
+        ring: "Adopt",
+        value: 5,
+        description: "ML-based equipment failure prediction",
+        details: "Reduces downtime by 35%, maintenance costs by 25%"
+    },
+    {
+        id: 15,
+        name: "Cloud-Based Operations Center",
+        focusArea: "Operations",
+        ring: "Adopt",
+        value: 4,
+        description: "Centralized cloud operations management platform",
+        details: "Multi-site coordination, real-time dashboards"
+    },
+    // Operations - Trial Ring
+    {
+        id: 16,
+        name: "Digital Twin Technology",
+        focusArea: "Operations",
+        ring: "Trial",
+        value: 4,
+        description: "Virtual replicas of physical assets for simulation",
+        details: "Test scenarios safely, optimize performance before deployment"
+    },
+    {
+        id: 17,
+        name: "Autonomous Equipment",
+        focusArea: "Operations",
+        ring: "Trial",
+        value: 3,
+        description: "Self-operating vehicles and equipment in field operations",
+        details: "Currently in controlled pilot environments"
+    },
+    // Operations - Assess Ring
+    {
+        id: 18,
+        name: "Blockchain Supply Chain",
+        focusArea: "Operations",
+        ring: "Assess",
+        value: 2,
+        description: "Distributed ledger for supply chain transparency",
+        details: "Evaluating scalability and energy efficiency"
+    },
+    // AI & Automation - Adopt Ring
+    {
+        id: 19,
+        name: "Data Analytics Platform",
+        focusArea: "AI",
+        ring: "Adopt",
+        value: 5,
+        description: "Enterprise-wide big data analytics infrastructure",
+        details: "Petabyte scale, real-time processing, 90% data utilization"
+    },
+    {
+        id: 20,
+        name: "Machine Learning Pipelines",
+        focusArea: "AI",
+        ring: "Adopt",
+        value: 5,
+        description: "Automated ML model development and deployment",
+        details: "MLOps, continuous learning, production-grade models"
+    },
+    {
+        id: 21,
+        name: "Process Automation (RPA)",
+        focusArea: "AI",
+        ring: "Adopt",
+        value: 4,
+        description: "Robotic process automation for back-office tasks",
+        details: "60% labor cost reduction, 99.9% accuracy"
+    },
+    // AI & Automation - Trial Ring
+    {
+        id: 22,
+        name: "Generative AI for Reporting",
+        focusArea: "AI",
+        ring: "Trial",
+        value: 4,
+        description: "GPT-based automated report generation",
+        details: "Creates technical summaries in seconds, in pilot with teams"
+    },
+    {
+        id: 23,
+        name: "Computer Vision for QA",
+        focusArea: "AI",
+        ring: "Trial",
+        value: 3,
+        description: "Visual AI for quality control and defect detection",
+        details: "Testing in manufacturing and inspection workflows"
+    },
+    // AI & Automation - Assess Ring
+    {
+        id: 24,
+        name: "Neuromorphic Computing",
+        focusArea: "AI",
+        ring: "Assess",
+        value: 2,
+        description: "Brain-inspired AI architecture for energy efficiency",
+        details: "Research stage, potential for extreme low-power AI"
+    },
+    // AI & Automation - Hold Ring
+    {
+        id: 25,
+        name: "Unproven Quantum ML",
+        focusArea: "AI",
+        ring: "Hold",
+        value: 1,
+        description: "Quantum machine learning algorithms",
+        details: "Too immature, wait for hardware and algorithms to mature"
+    }
+];
+
+const focusAreas = ["Reservoir Potential", "HSSE", "Operations", "AI"];
+const techClusters = ["Adopt", "Trial", "Assess", "Hold"];
+const ringColors = {
+    "Adopt": "#ff6b35",
+    "Trial": "#f7931e",
+    "Assess": "#fdb913",
+    "Hold": "#c0c0c0"
+};
+const quadrantAngles = {
+    "Reservoir Potential": 45,
+    "HSSE": 135,
+    "Operations": 225,
+    "AI": 315
+};
+
+// Main Radar Visualization Engine
+class TechRadar {
+    constructor() {
+        this.width = 1000;
+        this.height = 1000;
+        this.centerX = this.width / 2;
+        this.centerY = this.height / 2;
+        this.maxRadius = 350;
+        this.animationDuration = 60000;
+        
+        this.svg = d3.select("#radarSvg");
+        this.tooltip = d3.select("#tooltip");
+        this.tooltipContent = d3.select(".tooltip-content");
+        
+        this.activeFilters = {
+            focusAreas: new Set(focusAreas),
+            techClusters: new Set(techClusters)
+        };
+        
+        this.filteredData = radarData;
+        
+        this.init();
+    }
+    
+    init() {
+        this.svg.attr("width", this.width).attr("height", this.height);
+        
+        this.mainGroup = this.svg.append("g")
+            .attr("class", "main-group")
+            .attr("transform", `translate(${this.centerX}, ${this.centerY})`);
+        
+        this.drawBackground();
+        
+        this.radarGroup = this.mainGroup.append("g")
+            .attr("class", "radar-group");
+        
+        this.drawRadar();
+        this.startRotation();
+        this.setupFilterListeners();
+        this.render();
+    }
+    
+    drawBackground() {
+        const rings = [1, 2, 3, 4];
+        const ringRadius = this.maxRadius / 4;
+        
+        rings.forEach((ring, idx) => {
+            const radius = ringRadius * ring;
+            
+            this.mainGroup.append("circle")
+                .attr("class", "radar-ring")
+                .attr("r", radius);
+            
+            this.mainGroup.append("text")
+                .attr("class", "radar-label")
+                .attr("x", radius)
+                .attr("y", -5)
+                .text(this.getRingName(ring));
+        });
+        
+        const quadrants = [45, 135, 225, 315];
+        quadrants.forEach(angle => {
+            const rad = (angle * Math.PI) / 180;
+            const x = Math.cos(rad) * this.maxRadius;
+            const y = Math.sin(rad) * this.maxRadius;
+            
+            this.mainGroup.append("line")
+                .attr("x1", 0)
+                .attr("y1", 0)
+                .attr("x2", x)
+                .attr("y2", y)
+                .attr("stroke", "rgba(255, 107, 53, 0.1)")
+                .attr("stroke-width", 1);
+        });
+        
+        const quadrantLabels = [
+            { angle: 45, label: "Reservoir Potential" },
+            { angle: 135, label: "HSSE" },
+            { angle: 225, label: "Operations" },
+            { angle: 315, label: "AI" }
+        ];
+        
+        quadrantLabels.forEach(({ angle, label }) => {
+            const rad = (angle * Math.PI) / 180;
+            const x = Math.cos(rad) * (this.maxRadius + 60);
+            const y = Math.sin(rad) * (this.maxRadius + 60);
+            
+            this.mainGroup.append("text")
+                .attr("class", "radar-label")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "middle")
+                .style("font-weight", "600")
+                .style("font-size", "14px")
+                .style("fill", "#ff6b35")
+                .text(label);
+        });
+    }
+    
+    drawRadar() {
+        this.radarGroup.selectAll(".bubble").remove();
+        
+        const bubbles = this.radarGroup.selectAll(".bubble")
+            .data(this.filteredData, d => d.id)
+            .enter()
+            .append("g")
+            .attr("class", "bubble")
+            .attr("data-id", d => d.id)
+            .on("mouseenter", (event, d) => this.showTooltip(event, d))
+            .on("mousemove", (event) => this.moveTooltip(event))
+            .on("mouseleave", () => this.hideTooltip());
+        
+        bubbles.append("circle")
+            .attr("cx", d => this.getRadarX(d))
+            .attr("cy", d => this.getRadarY(d))
+            .attr("r", d => this.getBubbleRadius(d.value))
+            .attr("fill", d => ringColors[d.ring])
+            .attr("opacity", 0.75)
+            .attr("stroke", d => ringColors[d.ring])
+            .attr("stroke-width", 2);
+        
+        bubbles.append("text")
+            .attr("x", d => this.getRadarX(d))
+            .attr("y", d => this.getRadarY(d))
+            .text(d => d.name.substring(0, 3).toUpperCase())
+            .attr("fill", "#fff")
+            .attr("font-size", "10px")
+            .attr("font-weight", "bold")
+            .attr("pointer-events", "none");
+    }
+    
+    getRadarX(d) {
+        const angle = quadrantAngles[d.focusArea];
+        const ring = this.getRingIndex(d.ring);
+        const radius = (this.maxRadius / 4) * ring;
+        const rad = (angle * Math.PI) / 180;
+        const jitterX = (Math.random() - 0.5) * 30;
+        return Math.cos(rad) * radius + jitterX;
+    }
+    
+    getRadarY(d) {
+        const angle = quadrantAngles[d.focusArea];
+        const ring = this.getRingIndex(d.ring);
+        const radius = (this.maxRadius / 4) * ring;
+        const rad = (angle * Math.PI) / 180;
+        const jitterY = (Math.random() - 0.5) * 30;
+        return Math.sin(rad) * radius + jitterY;
+    }
+    
+    getBubbleRadius(value) {
+        return 8 + (value - 1) * 4.25;
+    }
+    
+    getRingIndex(ring) {
+        const rings = ["Adopt", "Trial", "Assess", "Hold"];
+        return rings.indexOf(ring) + 1;
+    }
+    
+    getRingName(ring) {
+        const names = ["", "Adopt", "Trial", "Assess"];
+        return names[ring];
+    }
+    
+    startRotation() {
+        this.radarGroup.transition()
+            .duration(this.animationDuration)
+            .ease(d3.easeLinear)
+            .attr("transform", `rotate(360)`)
+            .on("end", () => {
+                this.radarGroup.attr("transform", `rotate(0)`);
+                this.startRotation();
+            });
+    }
+    
+    showTooltip(event, d) {
+        const [x, y] = d3.pointer(event);
+        
+        d3.select("#tooltipTitle").text(d.name);
+        d3.select("#tooltipDescription").text(d.description);
+        
+        const details = `
+            <strong>Focus Area:</strong> ${d.focusArea}<br>
+            <strong>Stage:</strong> ${d.ring}<br>
+            <strong>Maturity:</strong> ${'★'.repeat(d.value)}${'☆'.repeat(5 - d.value)}<br>
+            <strong>Details:</strong> ${d.details}
+        `;
+        d3.select("#tooltipDetails").html(details);
+        
+        this.tooltip.classed("visible", true);
+        this.moveTooltip(event);
+    }
+    
+    moveTooltip(event) {
+        const [x, y] = d3.pointer(event);
+        const tooltipWidth = 300;
+        const tooltipHeight = 200;
+        
+        let tooltipX = x + 20;
+        let tooltipY = y + 20;
+        
+        if (tooltipX + tooltipWidth > window.innerWidth) {
+            tooltipX = x - tooltipWidth - 20;
+        }
+        if (tooltipY + tooltipHeight > window.innerHeight) {
+            tooltipY = y - tooltipHeight - 20;
+        }
+        
+        this.tooltip
+            .style("left", tooltipX + "px")
+            .style("top", tooltipY + "px");
+    }
+    
+    hideTooltip() {
+        this.tooltip.classed("visible", false);
+    }
+    
+    setupFilterListeners() {
+        d3.selectAll("#focusAreaFilters input[type='checkbox']")
+            .on("change", () => this.updateFilters());
+        
+        d3.selectAll("#techClusterFilters input[type='checkbox']")
+            .on("change", () => this.updateFilters());
+        
+        d3.select("#resetFilters")
+            .on("click", () => this.resetFilters());
+    }
+    
+    updateFilters() {
+        const activeAreas = new Set();
+        d3.selectAll("#focusAreaFilters input[type='checkbox']:checked")
+            .each(function() {
+                activeAreas.add(d3.select(this).property("value"));
+            });
+        
+        const activeClusters = new Set();
+        d3.selectAll("#techClusterFilters input[type='checkbox']:checked")
+            .each(function() {
+                activeClusters.add(d3.select(this).property("value"));
+            });
+        
+        this.activeFilters.focusAreas = activeAreas;
+        this.activeFilters.techClusters = activeClusters;
+        
+        this.render();
+    }
+    
+    resetFilters() {
+        this.activeFilters.focusAreas = new Set(focusAreas);
+        this.activeFilters.techClusters = new Set(techClusters);
+        
+        d3.selectAll("#focusAreaFilters input[type='checkbox']")
+            .property("checked", true);
+        d3.selectAll("#techClusterFilters input[type='checkbox']")
+            .property("checked", true);
+        
+        this.render();
+    }
+    
+    render() {
+        this.filteredData = radarData.filter(item => 
+            this.activeFilters.focusAreas.has(item.focusArea) &&
+            this.activeFilters.techClusters.has(item.ring)
+        );
+        
+        this.drawRadar();
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const radar = new TechRadar();
+});
+    </script>
+</body>
+</html>
